@@ -12,14 +12,18 @@
         <h5 class="text-center">Perbandingan Citra Digital Sebelum dan Sesudah Melakukan Kombinasi Proses Enkripsi Menggunakan Algoritma RC4 dengan Metode Steganografi Least Significant Bit (LSB)</h5>
 
         <div class="card container col-md-6 mt-4">
-            <form action="/action_page.php" class="mt-2">
+            <div class="mt-2" style="display:inline-block">
+              <a href="/" class="btn btn-sm btn-secondary">ENCODE</a>
+              <a href="/decode" class="btn btn-sm btn-primary">DECODE</a>
+            </div>
+            <form method="post" action="/encode" class="mt-2" enctype="multipart/form-data">
                 <div class="form-group">
-                  <label for="email">Text Rahasia :</label>
-                  <input type="text" class="form-control" placeholder="Input text yang akan disisipkan" id="text">
+                  <label for="hidden_text">Text :</label>
+                  <input name="hidden_text" type="text" class="form-control" placeholder="Input text yang akan disisipkan" id="hidden_text" autocomplete="off">
                 </div>
                 <div class="form-group">
-                  <label for="pwd">Password :</label>
-                  <input type="password" class="form-control" placeholder="Input password" id="pwd">
+                  <label for="password">Password :</label>
+                  <input name="password" type="password" class="form-control" placeholder="Input password" id="password">
                 </div>
                 <div class="form-group">
                   <label for="picture">File Gambar:</label>
