@@ -5,6 +5,11 @@
     <title>RC4 & LSB</title>   
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+      .rgb {
+        list-style-type: none; /* Remove bullets */
+      }
+    </style>
   </head>
 
   <body>
@@ -16,23 +21,220 @@
               <a href="/" class="btn btn-sm btn-secondary">ENCODE</a>
               <a href="/decode" class="btn btn-sm btn-primary">DECODE</a>
             </div>
-            <div class="row text-center mb-2">
-              <div class="col-md-6">
-                <label for="img">Original</label>
-                <img id="img" src="{{ url_for('static', filename='img/' + ori_img[0]) }}" alt="" class="form-control img-fluid">
-                <p style="font-size: small;">
-                  Ukuran : {{ ori_img[1] }} byte
-                </p>
-              </div>
-              <div class="col-md-6">
-                <label for="">LSB</label>
-                <img id="img" src="{{ url_for('static', filename='img_lsb/' + lsb_img[0]) }}" alt="" class="form-control img-fluid">
-                <p style="font-size: small;">
-                  Ukuran : {{ lsb_img[1] }} byte
-                </p>  
+            <h5 class="text-center">Proses</h5>
+            <small>
+              Text : {{ data.text }} <br>
+              Pass : {{ data.pass }}
+            </small>
+            <div class="row">
+              <div class="container">
+                <table class="table" style="font-size: small;">
+                  <thead>
+                    <tr>
+                      <th style="width: 5%;">Tahap</th>
+                      <th style="width: 35%;">Deskripsi</th>
+                      <th style="width: 55%;">Hasil</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>1</td>
+                      <td>PRNG password</td>
+                      <td style="overflow-y: scroll;">
+                        <div style="max-height: 100px; text-align: justify;">
+                          {{ data.tahap1 }}
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td>Convert text ke chippertext dengan algoritma rc4</td>
+                      <td>{{ data.tahap2 }}</td>
+                    </tr>
+                    <tr>
+                      <td>3</td>
+                      <td>Convert chippertext ke biner</td>
+                      <td>{{ data.tahap3 }}</td>
+                    </tr>
+                    <tr>
+                      <td>4</td>
+                      <td>Convert gambar ke rgb</td>
+                      <td style="overflow-y: scroll;">
+                        <div style="max-height: 100px;">
+                          <table class="table" style="font-size: small;">
+                            <thead>
+                              <tr>
+                                <th scope="col">Red</th>
+                                <th scope="col">Green</th>
+                                <th scope="col">Blue</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for ar in data.tahap4 %}
+                                <tr>
+                                  <td>{{ ar[0] }}</td>
+                                  <td>{{ ar[1] }}</td>
+                                  <td>{{ ar[2] }}</td>
+                                </tr>
+                              {% endfor %}
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>5</td>
+                      <td>Convert rgb gambar ke biner</td>
+                      <td style="overflow-y: scroll;">
+                        <div style="max-height: 100px;">
+                          <table class="table" style="font-size: small;">
+                            <thead>
+                              <tr>
+                                <th scope="col">Red</th>
+                                <th scope="col">Green</th>
+                                <th scope="col">Blue</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {% for ar in data.tahap5 %}
+                                <tr>
+                                  <td>{{ ar[0] }}</td>
+                                  <td>{{ ar[1] }}</td>
+                                  <td>{{ ar[2] }}</td>
+                                </tr>
+                              {% endfor %}
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                      <tr>
+                        <td>6</td>
+                        <td>Menyisipkan biner chippertext ke biner rgb gambar sesuai hasil posisi PRNG</td>
+                        <td style="overflow-y: scroll;">
+                          <div style="max-height: 100px;">
+                            <table class="table" style="font-size: small;">
+                              <thead>
+                                <tr>
+                                  <th scope="col">Red</th>
+                                  <th scope="col">Green</th>
+                                  <th scope="col">Blue</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {% for ar in data.tahap6 %}
+                                  <tr>
+                                    <td>{{ ar[0] }}</td>
+                                    <td>{{ ar[1] }}</td>
+                                    <td>{{ ar[2] }}</td>
+                                  </tr>
+                                {% endfor %}
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-            <p class="mt-2" style="font-size: small;">Waktu Eksekusi : {{ time_execute }} second</p>
+            <h5 class="text-center mt-4">Hasil</h5>
+            <div class="row text-center">
+              <div class="col-md-6">
+                <label for="img">Original</label>
+                <img id="img" src="{{ url_for('static', filename='img/' + data.ori_img.path) }}" alt="" class="form-control img-fluid">
+                <span style="font-size: small;">
+                  Ukuran : {{ data.ori_img.size }} byte
+                </span>
+                <div style="overflow: auto; max-height: 200px;">
+                  <table class="table" style="font-size: small;">
+                    <thead>
+                      <tr>
+                        <th scope="col">Red</th>
+                        <th scope="col">Green</th>
+                        <th scope="col">Blue</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for ar in data.ori_img.arr %}
+                        <tr>
+                          <td>{{ ar[0] }}</td>
+                          <td>{{ ar[1] }}</td>
+                          <td>{{ ar[2] }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+                <div class="mt-4" style="overflow: auto; max-height: 200px;">
+                  <table class="table" style="font-size: small;">
+                    <thead>
+                      <tr>
+                        <th scope="col">Red</th>
+                        <th scope="col">Green</th>
+                        <th scope="col">Blue</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for ar in data.ori_img.bin %}
+                        <tr>
+                          <td>{{ ar[0] }}</td>
+                          <td>{{ ar[1] }}</td>
+                          <td>{{ ar[2] }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="img">LSB</label>
+                <img id="img" src="{{ url_for('static', filename='img_lsb/' + data.lsb_img.path) }}" alt="" class="form-control img-fluid">
+                <span style="font-size: small;">
+                  Ukuran : {{ data.lsb_img.size }} byte
+                </span>
+                <div style="overflow: auto; max-height: 200px;">
+                  <table class="table" style="font-size: small;">
+                    <thead>
+                      <tr>
+                        <th scope="col">Red</th>
+                        <th scope="col">Green</th>
+                        <th scope="col">Blue</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for ar in data.lsb_img.arr %}
+                        <tr>
+                          <td>{{ ar[0] }}</td>
+                          <td>{{ ar[1] }}</td>
+                          <td>{{ ar[2] }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div> 
+                <div class="mt-4" style="overflow: auto; max-height: 200px;">
+                  <table class="table" style="font-size: small;">
+                    <thead>
+                      <tr>
+                        <th scope="col">Red</th>
+                        <th scope="col">Green</th>
+                        <th scope="col">Blue</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for ar in data.lsb_img.bin %}
+                        <tr>
+                          <td>{{ ar[0] }}</td>
+                          <td>{{ ar[1] }}</td>
+                          <td>{{ ar[2] }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div> 
+              </div>
+            </div>
+            <p class="mt-4" style="font-size: small;">Waktu Eksekusi : {{ data.time_execute }} second</p>
         </div>
     </div>
   </body>

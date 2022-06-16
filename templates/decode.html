@@ -29,7 +29,8 @@
             </form>
             {% if status == "success" %}
               <p style="font-size: small;">Hasil Decode : {{ dekrip_text }} <br>Waktu Eksekusi : {{ time_execute }} second</p>
-            {% elif status == "error" %}
+              <img id="img" src="{{ url_for('static', filename='img_lsb/' + path) }}" alt="" class="form-control img-fluid">
+              {% elif status == "error" %}
               <p style="font-size: small;">Invalid</p>
             {% endif %}
         </div>
