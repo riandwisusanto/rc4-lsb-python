@@ -89,9 +89,34 @@ def prng(key, length):
     
     return box
 
+# pretty size mapping
+UNITS_MAPPING = [
+    (1<<50, ' PB'),
+    (1<<40, ' TB'),
+    (1<<30, ' GB'),
+    (1<<20, ' MB'),
+    (1<<10, ' KB'),
+    (1, (' byte', ' bytes')),
+]
+
+# convert size to pretty size (ex. KB, MB, TB)
+def pretty_size(bytes, units=UNITS_MAPPING):
+    for factor, suffix in units:
+        if bytes >= factor:
+            break
+    amount = int(bytes / factor)
+
+    if isinstance(suffix, tuple):
+        singular, multiple = suffix
+        if amount == 1:
+            suffix = singular
+        else:
+            suffix = multiple
+    return str(amount) + suffix
+
 @app.route('/', methods=['GET'])
 def home():
-    return render_template("home.html")
+    return render_template("home.html", error = "")
 
 @app.route('/encode', methods=['POST'])
 def encode():
@@ -106,69 +131,75 @@ def encode():
     message  = request.form['hidden_text']
     password = request.form['password']
 
-    # convert prng and rc4
-    position = prng(password, image.shape[0])
-    chipper  = rc4(password, message)
+    # check max text
+    maxText = int(image.shape[0] / 8) - 24
+    if len(message) > maxText:
+        error = "Gagal, maksimal karakter " + str(maxText) + ", jumlah karakter " + str(len(message))
+        return render_template("home.html", error = error)
+    else:
+        # convert prng and rc4
+        position = prng(password, image.shape[0])
+        chipper  = rc4(password, message)
 
-    # encode to lsb and save to img_lsb as image
-    encode  = lsb(image, chipper, position)
-    cv2.imwrite("assets/img_lsb/"+ picture.filename.split('.')[0] + '.png' ,encode)
+        # encode to lsb and save to img_lsb as image
+        encode  = lsb(image, chipper, position)
+        cv2.imwrite("assets/img_lsb/"+ picture.filename.split('.')[0] + '.png' ,encode)
 
-    # display array image and array image lsb
-    ar_ori = cv2.imread("assets/img/" + picture.filename)
-    ar_lsb = cv2.imread("assets/img_lsb/" + picture.filename.split('.')[0] + '.png')
-    arr_ori = []
-    arr_lsb = []
-    bin_ori = []
-    bin_lsb = []
-    i = 0
-    for pos in position:
-        arr_ori.append(ar_ori[0][pos])
-        arr_lsb.append(ar_lsb[0][pos])
+        # display array image and array image lsb
+        ar_ori = cv2.imread("assets/img/" + picture.filename)
+        ar_lsb = cv2.imread("assets/img_lsb/" + picture.filename.split('.')[0] + '.png')
+        arr_ori = []
+        arr_lsb = []
+        bin_ori = []
+        bin_lsb = []
+        i = 0
+        for pos in position:
+            arr_ori.append(ar_ori[0][pos])
+            arr_lsb.append(ar_lsb[0][pos])
 
-        bin_ori.append(data2binary(ar_ori[0][pos]))
-        bin_lsb.append(data2binary(ar_lsb[0][pos]))
+            bin_ori.append(data2binary(ar_ori[0][pos]))
+            bin_lsb.append(data2binary(ar_lsb[0][pos]))
 
-        i += 1
-        if i == (len(message) * 8):
-            break
+            i += 1
+            if i == (len(message) * 8):
+                break
 
-    # set ori image to display result
-    ori_img = {
-        "path": picture.filename,
-        "size": os.path.getsize('assets/img/'+picture.filename),
-        "arr" : arr_ori,
-        "bin" : bin_ori
-    }
-    
-    # set lsb image to display result
-    lsb_img = {
-        "path": picture.filename.split('.')[0] + '.png',
-        "size": os.path.getsize('assets/img_lsb/'+picture.filename.split('.')[0] + '.png'),
-        "arr" : arr_lsb,
-        "bin" : bin_lsb
-    }
-    
-    time_execute = time.time() - time_execute
+        # set ori image to display result
+        ori_img = {
+            "path": picture.filename,
+            "size": pretty_size(os.path.getsize('assets/img/'+picture.filename)),
+            "arr" : arr_ori,
+            "bin" : bin_ori
+        }
+        
+        # set lsb image to display result
+        lsb_img = {
+            "path": picture.filename.split('.')[0] + '.png',
+            "size": pretty_size(os.path.getsize('assets/img_lsb/'+picture.filename.split('.')[0] + '.png')),
+            "arr" : arr_lsb,
+            "bin" : bin_lsb
+        }
+        
+        time_execute = time.time() - time_execute
 
-    # compress all to one variabel
-    data = {
-        # proses
-        "text"   : message,
-        "pass"   : password,
-        "tahap1" : ', '.join([str(elem) for elem in position]),
-        "tahap2" : chipper,
-        "tahap3" : data2binary(chipper),
-        "tahap4" : ar_ori[0],
-        "tahap5" : [data2binary(elem) for elem in ar_ori[0]],
-        "tahap6" : lsb_to_bin(ar_ori, "pppppp", position),
-        # hasil
-        "ori_img": ori_img,
-        "lsb_img": lsb_img,
-        "time_execute": time_execute
-    }
+        # compress all to one variabel
+        data = {
+            # proses
+            "text"   : message,
+            "pass"   : password,
+            "tahap1" : ', '.join([str(elem) for elem in position]),
+            "tahap2" : chipper,
+            "tahap3" : data2binary(chipper),
+            "tahap4" : ar_ori[0],
+            "tahap5" : [data2binary(elem) for elem in ar_ori[0]],
+            "tahap6" : lsb_to_bin(ar_ori, "pppppp", position),
+            # hasil
+            "ori_img": ori_img,
+            "lsb_img": lsb_img,
+            "time_execute": time_execute
+        }
 
-    return render_template("encode.html", data = data)
+        return render_template("encode.html", data = data)
 
 @app.route('/decode', methods=['GET','POST'])
 def decode():
